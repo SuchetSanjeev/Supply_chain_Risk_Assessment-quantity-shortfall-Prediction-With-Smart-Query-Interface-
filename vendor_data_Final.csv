@@ -1,0 +1,16 @@
+vendor_id,vendor_name,Reliability_score,avg_lead_days,past_incident_count,Quality_Rejection_Rate (%),Supplier_Dependency_Index,collaboration_tenure
+V001,Alpha Metals,81,3,1,2.6,49,6
+V002,Beta Supplies,76,9,4,4.2,64,1
+V003,Gamma Goods,71,8,1,4.7,47,7
+V004,Delta Traders,92,3,2,1,35,3
+V005,Epsilon Corp,68,10,1,5,70,1
+V006,Zeta Imports,87,7,1,6,66,2
+V007,Eta Vendors,92,4,1,2.4,51,2
+V008,Theta Supplies,72,3,0,4.3,35,4
+V009,Iota Traders,64,6,1,8.1,80,1
+V010,Kappa Goods,63,8,4,6.1,86,2
+V011,Lambda Ltd.,71,5,0,1.5,58,5
+V012,Mu Materials,50,11,5,6.7,80,4
+V013,Nu Logistics,77,6,3,6.5,77,5
+V014,Xi Exports,85,3,1,2.3,40,6
+V015,Omicron Co.,81,3,0,4.4,69,7

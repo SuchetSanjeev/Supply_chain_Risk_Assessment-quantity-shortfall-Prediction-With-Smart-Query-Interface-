@@ -1,0 +1,30 @@
+# Core UI
+streamlit
+
+# Data Handling
+pandas
+numpy
+
+# Machine Learning
+scikit-learn
+xgboost
+imblearn
+joblib
+
+# NLP & Retrieval QA
+langchain
+faiss-cpu
+sentence-transformers
+openai
+ollama
+
+# Visualization
+matplotlib
+seaborn
+
+# Statistics & Feature Importance
+statsmodels
+
+# pickling for model saving/loading
+joblib
+imblearn
