@@ -60,7 +60,7 @@ def feature_engineering(df):
 
 
 # === Drop Columns ===
-def drop_unnecessary_columns(df):
+def drop_unnecessary_columns(df):  
     drop_cols = [
             'Order_ID',                  #not required
             'Actual_Delivery_Date',      #not using
@@ -448,3 +448,46 @@ if __name__ == '__main__':
 #     cat_cols = ['Mode', 'Backup Route Availability']
 #     return pd.get_dummies(df, columns=cat_cols, drop_first=True)
 
+# #for visulizations
+# var_od = df['Order_Date'].copy()
+# var_q = df['Ordered_Qty'].copy()
+# var_cld = df['Committed_Lead_Days'].copy()
+# var_ald = df['Actual_Lead_Days'].copy()
+# var_Vid = df['Vendor_id'].copy()
+    
+#     def plot_component_demand_over_time(var_od, var_q):
+#     df = pd.DataFrame({'Order_Date': var_od, 'Ordered_Qty': var_q})
+#     df['Order_Date'] = pd.to_datetime(df['Order_Date'], errors='coerce')
+#     df.dropna(subset=['Order_Date'], inplace=True)
+
+#     df['Month'] = df['Order_Date'].dt.to_period('M')
+#     demand_by_month = df.groupby('Month')['Ordered_Qty'].sum()
+#     demand_by_month.index = demand_by_month.index.to_timestamp()
+
+#     fig, ax = plt.subplots(figsize=(10, 5))
+#     sns.lineplot(x=demand_by_month.index, y=demand_by_month.values, marker='o', ax=ax)
+#     ax.set_title("📈 Component Demand Over Time")
+#     ax.set_xlabel("Month")
+#     ax.set_ylabel("Ordered Quantity")
+#     ax.grid(True)
+#     plt.tight_layout()
+#     return fig
+
+# def plot_vendor_lead_time_analysis(var_vid, var_cld, var_ald):
+#     df = pd.DataFrame({
+#         'Vendor_ID': var_vid,
+#         'Committed_Lead_Days': var_cld,
+#         'Actual_Lead_Days': var_ald
+#     })
+
+#     df['Lead_Time_Difference'] = df['Actual_Lead_Days'] - df['Committed_Lead_Days']
+#     df.dropna(inplace=True)
+
+#     fig, ax = plt.subplots(figsize=(12, 6))
+#     sns.boxplot(x='Vendor_ID', y='Lead_Time_Difference', data=df, ax=ax)
+#     ax.set_title("📦 Vendor Lead Time Variability")
+#     ax.set_xlabel("Vendor ID")
+#     ax.set_ylabel("Lead Time Difference (Actual - Committed)")
+#     ax.tick_params(axis='x', rotation=45)
+#     plt.tight_layout()
+#     return fig

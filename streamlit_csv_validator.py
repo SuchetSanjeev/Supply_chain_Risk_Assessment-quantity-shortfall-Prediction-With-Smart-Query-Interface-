@@ -19,6 +19,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.chat_models import ChatOllama
 from langchain.llms import OpenAI
 from langchain.document_loaders import TextLoader
+from fuzzywuzzy import process
 
 # === PAGE CONFIG ===
 st.set_page_config(page_title="📦 Supply Chain Dashboard", layout="wide")
@@ -28,7 +29,7 @@ step = st.sidebar.radio("Go to", [
     "part 1 - Upload Files and Validate files",
     "part 2 - Merge Data and Train Model",
     "part 3 - Single Prediction",
-    "part 4 - Batch Prediction",
+    "part 4 - Batch Prediction"
 ])
 page = st.sidebar.radio("Go to", ["📦 Prediction Interface", "RAG Query Interface"])
 
@@ -68,54 +69,58 @@ if page == "📦 Prediction Interface":
         vendors_file = st.file_uploader("Upload Vendors CSV", type="csv")
         routes_file = st.file_uploader("Upload Routes CSV", type="csv")
 
-        if orders_file:
-            st.session_state.orders_df = pd.read_csv(orders_file)
-            # st.success("✅ Orders file uploaded.")
-        if vendors_file:
-            st.session_state.vendors_df = pd.read_csv(vendors_file)
-            # st.success("✅ Vendors file uploaded.")
-        if routes_file:
-            st.session_state.routes_df = pd.read_csv(routes_file)
-            # st.success("✅ Routes file uploaded.")
+        # === Fuzzy Column Mapping Utility ===
+        def fuzzy_match_columns(actual_cols, expected_cols, threshold=65):
+            mapping = {}
+            for exp_col in expected_cols:
+                match, score = process.extractOne(exp_col, actual_cols)
+                if score >= threshold:
+                    mapping[match] = exp_col
+            return mapping
 
-        # === Step 2: Validate Columns ===
+            
+        # === Step 2: Process & Validate Uploaded Files ===
         st.header("📋 Step 2: Validate Uploaded Files")
 
-        def check_columns(uploaded_df, expected_cols, label):
-            missing = [col for col in expected_cols if col not in uploaded_df.columns]
-            extra = [col for col in uploaded_df.columns if col not in expected_cols]
+        def process_uploaded_file(file, expected_cols, label):
+            if not file:
+                return None
+
+            df = pd.read_csv(file)
+            actual_cols = list(df.columns)
+            mapping = fuzzy_match_columns(actual_cols, expected_cols)
+
+            df_renamed = df.rename(columns=mapping)
+            st.session_state[label.lower() + "_df"] = df_renamed
+
+            # Feedback
+            st.subheader(f"🔍 Validation Summary: {label}")
+            matched = list(mapping.values())
+            missing = [col for col in expected_cols if col not in df_renamed.columns]
+            extra = [col for col in df_renamed.columns if col not in expected_cols]
+
+            if matched:
+                st.success(f"✅ Validation Successful")
+                # st.success(f"✅ columns matched : {matched}")
             if missing:
-                st.error(f"❌ {label} is missing: {missing}")
-            else:
-                st.success(f"✅ {label} has all required columns.")
+                st.warning(f"⚠ Missing columns: {missing}")
             if extra:
-                st.info(f"ℹ️ {label} has extra columns: {extra}")
+                st.info(f"ℹ Extra columns in file: {extra}")
+            return df_renamed
 
-        if st.session_state.orders_df is not None:
-            check_columns(st.session_state.orders_df, orders_expected_cols, "Orders")
-
-        if st.session_state.vendors_df is not None:
-            check_columns(st.session_state.vendors_df, vendors_expected_cols, "Vendors")
-
-        if st.session_state.routes_df is not None:
-            check_columns(st.session_state.routes_df, routes_expected_cols, "Routes")
-
+        # === Run the file checks ===
+        orders_df = process_uploaded_file(orders_file, orders_expected_cols, "Orders")
+        vendors_df = process_uploaded_file(vendors_file, vendors_expected_cols, "Vendors")
+        routes_df = process_uploaded_file(routes_file, routes_expected_cols, "Routes")
+        if orders_df is not None:
+            st.session_state.var_od = orders_df['Order_Date'].copy()
+            st.session_state.var_q = orders_df['Ordered_Qty'].copy()
+            st.session_state.var_cld = orders_df['Committed_Lead_Days'].copy()
+            st.session_state.var_ald = orders_df['Actual_Lead_Days'].copy()
+            st.session_state.var_Vid = orders_df['Vendor_ID'].copy()
+            
     if step == "part 2 - Merge Data and Train Model":
-        #THIS IS THE MERGING THAT I USED TO DO BUT I CHANGES ACCORDING TO THE MAIL SENT
-        # === Step 3: Merge Data ===
-        # st.header("🔗 Step 3: Merging the Uploaded files")
-
-        # if st.button("🔄 Merge Now"):
-        #     try:
-        #         merged = pd.merge(st.session_state.orders_df, st.session_state.vendors_df,
-        #                         left_on="Vendor_ID", right_on="vendor_id", how="left")
-        #         merged = pd.merge(merged, st.session_state.routes_df, on="Route_ID", how="left")
-        #         st.session_state.merged_df = merged
-        #         st.success("✅ Merged Dataset created successfully!")
-        #         st.dataframe(merged.head())
-        #     except Exception as e:
-        #         st.error(f"❌ Merge failed: {e}")
-
+        
         # === Step 3: Merge Data (Case-Insensitive) ===
         st.header("🔗 Step 3: Merge Uploaded Files")
 
@@ -131,7 +136,7 @@ if page == "📦 Prediction Interface":
 
         # === Step 3.1 - Merge Orders and Vendors ===
         if orders_df is not None and vendors_df is not None:
-            st.subheader("Step 3.1 - Merge Orders and Vendors")
+            st.subheader("Merge Orders and Vendors")
 
             common_cols_ov = get_common_columns_case_insensitive(orders_df, vendors_df)
             if common_cols_ov:
@@ -155,7 +160,7 @@ if page == "📦 Prediction Interface":
 
         # === Step 3.2 - Merge Above with Routes ===
         if st.session_state.get("merged_ov") is not None and routes_df is not None:
-            st.subheader("Step 3.2 - Merge Above with Routes")
+            st.subheader("Merge Above with Routes")
             merged_ov = st.session_state.merged_ov
 
             common_cols_r = get_common_columns_case_insensitive(merged_ov, routes_df)
@@ -178,51 +183,6 @@ if page == "📦 Prediction Interface":
             else:
                 st.warning("⚠️ No common columns between merged data and Routes to merge.")
 
-
-        # # === Step 4: Train Model ===
-        # st.header("🧠 Step 4: Train a Model")
-
-        # if st.session_state.merged_df is not None:
-        #     if st.button("🚀 Train Model"):
-        #         with st.spinner("Training..."):
-        #             df = feature_engineering(st.session_state.merged_df)
-        #             target = df['Shortfall_flag'].copy()
-        #             df = drop_unnecessary_columns(df)
-        #             df_encoded = encode_features(df)
-
-        #             X = df_encoded.copy()
-        #             y = target
-        #             X_train_scaled, X_test_scaled, y_train, y_test, scaler = split_and_scale_data(X, y)
-        #             X_train_res, y_train_res = apply_smote(X_train_scaled, y_train)
-
-        #             model = RandomForestClassifier(n_estimators=200, max_depth=10, random_state=42)
-        #             train_and_evaluate_model(model, "Random Forest", X_train_res, y_train_res, X_test_scaled, y_test)
-
-        #             joblib.dump(model, "model2.pkl")
-        #             joblib.dump(scaler, "scaler2.pkl")
-        #             joblib.dump(X.columns.tolist(), "columns2.pkl")
-        #             st.success("Trained model saved.")
-
-        #             training_output_df = df.copy()
-        #             training_output_df['Shortfall_flag'] = target
-        #             training_output_df.to_csv("knowledge_training_data.csv", index=False)
-        #             # st.info("💾 Saved `knowledge_training_data.csv` for RAG-based querying.")
-
-        #             y_probs = model.predict_proba(X_test_scaled)[:, 1]
-        #             y_preds = (y_probs >= 0.5).astype(int)
-        #             result_df = pd.DataFrame(X_test_scaled, columns=X.columns)
-        #             result_df['True_Shortfall'] = y_test.reset_index(drop=True)
-        #             result_df['Predicted_Shortfall'] = y_preds
-        #             result_df['Prediction_Probability'] = y_probs
-
-        #             csv = result_df.to_csv(index=False).encode()
-        #             st.download_button(
-        #                 label="📥 Download Test Predictions",
-        #                 data=csv,
-        #                 file_name="shortfall_test_predictions.csv",
-        #                 mime="text/csv"
-        #             )
-        
         # === Step 4: Train Model ===
         st.header("🧠 Step 4: Train a Model")
         if st.session_state.get("merged_df") is not None:
@@ -365,53 +325,7 @@ if page == "📦 Prediction Interface":
                 st.success("✅ Prediction Complete")
                 st.write(f"**Shortfall Probability:** `{prob:.4f}`")
                 st.write(f"**Predicted Shortfall Flag:** `{'Yes' if flag else 'No'}`")
-
-    # if step == "part 4 - Batch Prediction":
-    #     # === Step 6: Batch Prediction ===
-    #     st.header("📄 Step 6: Batch Prediction for Uploaded Order File")
-    #     batch_file = st.file_uploader("Upload New Orders CSV", type="csv", key="batch")
-
-    #     def batch_predict(df_batch):
-    #         model = joblib.load("model2.pkl")
-    #         scaler = joblib.load("scaler2.pkl")
-    #         reference_columns = joblib.load("columns2.pkl")
-
-    #         original_df = df_batch.copy()
-    #         df_batch = feature_engineering(df_batch)
-    #         df_batch = drop_unnecessary_columns(df_batch)
-    #         df_batch = encode_features(df_batch)
-    #         df_batch = df_batch.reindex(columns=reference_columns, fill_value=0)
-    #         df_scaled = scaler.transform(df_batch)
-
-    #         probs = model.predict_proba(df_scaled)[:, 1]
-    #         flags = (probs >= 0.5).astype(int)
-
-    #         original_df['Shortfall_Probability'] = probs
-    #         original_df['Predicted_Shortfall_Flag'] = flags
-    #         return original_df
-
-    #     if batch_file:
-    #         batch_df = pd.read_csv(batch_file)
-    #         st.markdown("📋 Preview of Uploaded File:")
-    #         st.dataframe(batch_df.head())
-
-    #         if st.button("🔍 Predict Shortfalls for Uploaded Orders"):
-    #             with st.spinner("Predicting..."):
-    #                 results = batch_predict(batch_df)
-    #                 st.success("✅ Batch Predictions Complete!")
-    #                 st.dataframe(results.head())
-
-    #                 csv_data = results.to_csv(index=False).encode()
-    #                 st.download_button(
-    #                     label="📥 Download Batch Predictions CSV",
-    #                     data=csv_data,
-    #                     file_name="batch_predictions.csv",
-    #                     mime="text/csv"
-    #                 )
-
-    #                 results.to_csv("knowledge_batch_predictions.csv", index=False)
-    #                 # st.info("💾 Saved `knowledge_batch_predictions.csv` for future RAG-based Q&A.")
-    
+                
     if step == "part 4 - Batch Prediction":
     # === Step 6: Batch Prediction ===
         st.header("📄 Step 6: Batch Prediction for Uploaded Order File")
@@ -485,14 +399,18 @@ if page == "📦 Prediction Interface":
 
 # === Page 2 ===
 elif page == "RAG Query Interface":
-    st.title("💬 Step 7: Ask Questions to Your Supply Chain Model (RAG + LLaMA 3)")
+    st.title("💬 Step 7: Ask Questions to Your Supply Chain Model with LLaMA 3")
     st.markdown("""
-    Use natural language to ask questions about:
-    - Vendor performance
-    - Route risk
-    - Shortfall causes
-    - Congestion impact
-    - Model predictions
+    Use natural language to ask questions(refer to some of the below examples):
+    - Which vendor has the best on-time delivery performance?
+    - What are the main factors contributing to quantity shortfalls in orders?
+    - How does high order pressure impact risk scores in the model?
+    - What does the feature Vendor_Risk represent in this system?
+    - Which vendor has the best on-time delivery performance?
+    - Which component has the highest order shortfall rate?
+    - Which route is associated with the most delayed deliveries?
+    - What is the average lead time for each vendor?
+    - Are there any vendors with a high quantity of orders but poor delivery performance?
     """)
 
     @st.cache_resource

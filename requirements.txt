@@ -28,3 +28,6 @@ statsmodels
 # pickling for model saving/loading
 joblib
 imblearn
+
+#for dynamic schema implementation in streamlit
+fuzzywuzzy
