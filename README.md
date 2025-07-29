@@ -72,6 +72,68 @@ This project uses **LLaMA 3** locally via **Ollama** to power the Retrieval-Augm
 
 ---
 
+🖥 Run the Streamlit App
+
+streamlit run streamlit_csv_validator.py
+
+Navigate to http://localhost:8501 in your browser.
+
+
+---
+
+📦 Upload Guidelines
+
+Orders CSV: Must contain columns like Order_ID, Component_ID, Ordered_Qty, etc.
+
+Vendors CSV: Must include reliability scores, incident counts, etc.
+
+Routes CSV: Should include transit days, risk score, mode, etc.
+
+
+Supports fuzzy matching of column names.
+
+
+---
+
+💡 Example Queries for RAG
+
+"Which vendor has the lowest incident count?"
+
+"What are the top risks for Route 12?"
+
+"Show delivery delays for March 2024."
+
+"What are the conditions that affect Vendor X performance?"
+
+"What is the recommended backup route strategy?"
+
+
+
+---
+
+📌 Dependencies
+
+Key packages:
+
+pandas, scikit-learn, xgboost, imblearn, joblib
+
+streamlit, matplotlib, seaborn
+
+langchain, langchain-community, fuzzywuzzy
+
+ollama (external install)
+
+
+---
+
+🤝 License & Credits
+
+Built with ❤ by Suchet Patil
+AI Capstone Project | VIT Vellore
+
+
+---
+
 # Working of my project
 
 - So basically to run this : put Order_Data_Final , vendor_Data_Final csv into the blank the interface part 1 where we upload csv  then based on the predefined schema in the backend it will verify and will help me validate my columns in step 2.
@@ -82,3 +144,9 @@ This project uses **LLaMA 3** locally via **Ollama** to power the Retrieval-Augm
 - Now in my final step 7 i could go to the Query interface where i ask any query related to my supply chain project built and it will help the customer try to resolve this issue.
 
 ---
+
+📬 Contact
+
+Have suggestions or issues?
+Raise an issue or mail: suchet.patil@example.com
+
