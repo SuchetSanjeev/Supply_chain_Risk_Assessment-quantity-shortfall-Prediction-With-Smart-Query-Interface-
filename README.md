@@ -72,7 +72,7 @@ This project uses **LLaMA 3** locally via **Ollama** to power the Retrieval-Augm
 
 ---
 
-🖥 Run the Streamlit App
+## 🖥 Run the Streamlit App
 
 streamlit run streamlit_csv_validator.py
 
@@ -81,7 +81,7 @@ Navigate to http://localhost:8501 in your browser.
 
 ---
 
-📦 Upload Guidelines
+## 📦 Upload Guidelines
 
 Orders CSV: Must contain columns like Order_ID, Component_ID, Ordered_Qty, etc.
 
@@ -95,7 +95,7 @@ Supports fuzzy matching of column names.
 
 ---
 
-💡 Example Queries for RAG
+## 💡 Example Queries for RAG
 
 "Which vendor has the lowest incident count?"
 
@@ -111,7 +111,7 @@ Supports fuzzy matching of column names.
 
 ---
 
-📌 Dependencies
+## 📌 Dependencies
 
 Key packages:
 
@@ -126,27 +126,27 @@ ollama (external install)
 
 ---
 
-🤝 License & Credits
+## 🤝 License & Credits
 
 Built with ❤ by Suchet Patil
 AI Capstone Project | VIT Vellore
 
-
 ---
 
-# Working of my project
-
-- So basically to run this : put Order_Data_Final , vendor_Data_Final csv into the blank the interface part 1 where we upload csv  then based on the predefined schema in the backend it will verify and will help me validate my columns in step 2.
-- After which we move onto step 3 which is merging the tables or uploaded csv's , firstly the merging is performed on order table and vendor table  based on the common columns, then my merging is performed on the currently merged dataset with the route table to give the final merged dataset which is used by the model for prediction in the backend
-- Now in step 4 i use this dataset to train my model using any of the 4 classification algorithm that has been displayed. 
-- After this comes the testing part which is step 5 for custom input/single input form format adjusted inputs for quantity shortfall prediction.
-- Then you could also perform bulk/batch prediction of unseen data in step 6 which takes here input file knowledge_batch_predictions_without_shortfall.csv as input and then we download the predictions and see the output. then our file knowledge_training_data is used to help us fine tune our LLM for the query interface (done in the backend). 
-- Now in my final step 7 i could go to the Query interface where i ask any query related to my supply chain project built and it will help the customer try to resolve this issue.
-
----
-
-📬 Contact
+## 📬 Contact
 
 Have suggestions or issues?
 Raise an issue or mail: suchet.patil@example.com
+
+---
+
+# My understanding of the project overview
+
+- So basically to run this : put these files Order_Data_Final/Order_Data_Final_for_fuzzer_test.csv , vendor_Data_Final/vendor_Data_Final_for_fuzzer_test.csv , Route_Data_Final/Route_Data_Final_for_fuzzer_test.csv into the empty file upload of the interface (1) where we upload csv then it will use fuzzers logic and match it with the predefined schema in the backend and then it will verify and will help me validate my columns in next step (2).
+- After which we move onto the next step (3) which is merging the tables or uploaded csv's , firstly the merging is performed on order table and vendor table  based on the common columns, then my merging is performed on the currently merged dataset with the route table to give the final merged dataset which is used by the model for prediction in the backend
+- Now in the next step (4) i use this dataset to train my model using any of the 4 classification algorithm(RF,LR,XGB,SVM) that has been displayed. 
+- After this comes the testing part which is the next step (5) for custom input/single input form format adjusted inputs for quantity shortfall prediction.
+- Then you could also perform bulk/batch prediction of unseen data in step 6 which takes here input file knowledge_batch_predictions_without_shortfall.csv as input and then we download the predictions and see the output. then our file knowledge_training_data is used to help us fine tune our LLM for the query interface (done in the backend). 
+- Now in my final step (7) i could go to the Query interface where i ask any query related to my supply chain project built and it will help the customer try to resolve this issue.
+
 
