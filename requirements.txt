@@ -17,6 +17,7 @@ faiss-cpu
 sentence-transformers
 openai
 ollama
+langchain-community
 
 # Visualization
 matplotlib
