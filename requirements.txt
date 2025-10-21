@@ -12,13 +12,19 @@ imblearn
 joblib
 
 # NLP & Retrieval QA
-langchain>=0.2.0
-faiss-cpu
-sentence-transformers
+# langchain>=0.2.0
+# faiss-cpu
+# sentence-transformers
+# langchain-community
+# langchain-google-genai
+
+langchain==0.2.56
+langchain-community==0.0.189
+langchain-google-genai==0.1.26
+faiss-cpu==1.7.4
+sentence-transformers==2.2.2
 openai
 ollama
-langchain-community
-langchain-google-genai
 
 # Visualization
 matplotlib
