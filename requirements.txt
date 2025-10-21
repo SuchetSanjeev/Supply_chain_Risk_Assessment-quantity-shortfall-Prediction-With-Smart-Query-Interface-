@@ -12,7 +12,7 @@ imblearn
 joblib
 
 # NLP & Retrieval QA
-langchain
+langchain>=0.2.0
 faiss-cpu
 sentence-transformers
 openai
