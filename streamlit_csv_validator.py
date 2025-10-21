@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import os
+
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
@@ -11,15 +13,24 @@ from supply_chain_model import (
     split_and_scale_data, apply_smote, train_and_evaluate_model
 )
 # LangChain (RAG-related)
-from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
+# from langchain.vectorstores import FAISS
+# from langchain_community.vectorstores import FAISS
+# from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.chains import RetrievalQA
-from langchain.docstore.document import Document
-from langchain.text_splitter import CharacterTextSplitter
+# from langchain.docstore.document import Document
+# from langchain.text_splitter import CharacterTextSplitter
 from langchain.chat_models import ChatOllama
 from langchain.llms import OpenAI
-from langchain.document_loaders import TextLoader
+# from langchain.document_loaders import TextLoader
 from fuzzywuzzy import process
+
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.document_loaders import TextLoader
+from langchain_core.documents import Document
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 
 # === PAGE CONFIG ===
 st.set_page_config(page_title="📦 Supply Chain Dashboard", layout="wide")
@@ -396,32 +407,45 @@ if page == "📦 Prediction Interface":
                     results.to_csv("knowledge_batch_predictions.csv", index=False)
                     # st.info("💾 Saved `knowledge_batch_predictions.csv` for future RAG-based Q&A.")
 
-
-# === Page 2 ===
+# === Page 2 === 
 elif page == "RAG Query Interface":
     st.title("💬 Step 7: Ask Questions to Your Supply Chain Model with LLaMA 3")
     st.markdown("""
     Use natural language to ask questions(refer to some of the below examples):
-    - Which vendor has the best on-time delivery performance?
+    - Which vendor leads to most quantity shortfalls?
     - What are the main factors contributing to quantity shortfalls in orders?
     - How does high order pressure impact risk scores in the model?
-    - What does the feature Vendor_Risk represent in this system?
-    - Which vendor has the best on-time delivery performance?
-    - Which component has the highest order shortfall rate?
     - Which route is associated with the most delayed deliveries?
     - What is the average lead time for each vendor?
+    - What does the feature Vendor_Risk represent in this system?
     - Are there any vendors with a high quantity of orders but poor delivery performance?
     """)
+    # --- Imports ---
+    from langchain_community.vectorstores import FAISS
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain.chains import RetrievalQA
+    from langchain_google_genai import ChatGoogleGenerativeAI
 
     @st.cache_resource
     def load_qa_chain():
         try:
+            # Load FAISS index
             embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
             db = FAISS.load_local("faiss_store", embeddings, allow_dangerous_deserialization=True)
             retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 5})
-            llm = ChatOllama(model="llama3:8b", temperature=0.2,stream=True)
-            qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
-            # st.success("✅ FAISS index and LLaMA 3 initialized successfully!")
+
+            # ✅ Use Gemini model (Free quota from Google)
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-2.5-flash",
+                google_api_key=os.getenv("GOOGLE_API_KEY"),
+                temperature=0.2
+            )
+
+            qa_chain = RetrievalQA.from_chain_type(
+                llm=llm,
+                retriever=retriever,
+                return_source_documents=True
+            )
             return qa_chain
         except Exception as e:
             st.error(f"❌ Failed to initialize RAG system: {e}")
@@ -442,3 +466,49 @@ elif page == "RAG Query Interface":
                             st.markdown(f"`...{doc.page_content[:400]}...`")
                 except Exception as e:
                     st.error(f"Error generating answer: {e}")
+
+# === Page 2 ===
+# elif page == "RAG Query Interface":
+#     st.title("💬 Step 7: Ask Questions to Your Supply Chain Model with LLaMA 3")
+#     st.markdown("""
+#     Use natural language to ask questions(refer to some of the below examples):
+#     - Which vendor has the best on-time delivery performance?
+#     - What are the main factors contributing to quantity shortfalls in orders?
+#     - How does high order pressure impact risk scores in the model?
+#     - What does the feature Vendor_Risk represent in this system?
+#     - Which vendor has the best on-time delivery performance?
+#     - Which component has the highest order shortfall rate?
+#     - Which route is associated with the most delayed deliveries?
+#     - What is the average lead time for each vendor?
+#     - Are there any vendors with a high quantity of orders but poor delivery performance?
+#     """)
+
+#     @st.cache_resource
+#     def load_qa_chain():
+#         try:
+#             embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+#             db = FAISS.load_local("faiss_store", embeddings, allow_dangerous_deserialization=True)
+#             retriever = db.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+#             llm = ChatOllama(model="llama3:8b", temperature=0.2,stream=True)
+#             qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, return_source_documents=True)
+#             # st.success("✅ FAISS index and LLaMA 3 initialized successfully!")
+#             return qa_chain
+#         except Exception as e:
+#             st.error(f"❌ Failed to initialize RAG system: {e}")
+#             return None
+
+#     qa_chain = load_qa_chain()
+
+#     if qa_chain:
+#         user_query = st.text_input("💬 Ask your question:")
+#         if user_query:
+#             with st.spinner("🔎 Thinking..."):
+#                 try:
+#                     result = qa_chain(user_query)
+#                     st.markdown("### ✅ Answer")
+#                     st.write(result['result'])
+#                     with st.expander("📄 Sources"):
+#                         for doc in result['source_documents']:
+#                             st.markdown(f"`...{doc.page_content[:400]}...`")
+#                 except Exception as e:
+#                     st.error(f"Error generating answer: {e}")

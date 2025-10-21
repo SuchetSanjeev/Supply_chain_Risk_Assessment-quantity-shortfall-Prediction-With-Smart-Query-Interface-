@@ -18,6 +18,7 @@ sentence-transformers
 openai
 ollama
 langchain-community
+langchain-google-genai
 
 # Visualization
 matplotlib

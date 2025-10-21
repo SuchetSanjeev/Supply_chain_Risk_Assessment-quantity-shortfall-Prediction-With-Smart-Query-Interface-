@@ -9,6 +9,7 @@ from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
 from langchain.document_loaders import TextLoader
 from langchain.docstore.document import Document
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 # === Load and Combine Knowledge CSVs ===
